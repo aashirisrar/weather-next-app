@@ -20,13 +20,29 @@ const formSchema = z.object({
   place: z.string().min(2).max(50),
 });
 
+interface WeatherDataItem {
+  overall_aqi: number;
+}
+
 interface InputFormProps {
   title: string;
 }
 
 import axios from "axios";
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 
 const InputForm = ({ title }: InputFormProps) => {
+  const [weather, setWeather] = useState<WeatherDataItem[]>([]);
+  const [place, setPlace] = useState("");
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -34,20 +50,21 @@ const InputForm = ({ title }: InputFormProps) => {
     },
   });
 
-  // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const options = {
-      method: "GET",
-      url: "https://air-quality-by-api-ninjas.p.rapidapi.com/v1/airquality",
-      params: { city: values.place },
-      headers: {
-        "X-RapidAPI-Key": "b8eb4c64d1msh82f4f5538e5065ap1d2b92jsn7113e96b5efb",
-        "X-RapidAPI-Host": "air-quality-by-api-ninjas.p.rapidapi.com",
-      },
-    };
+    setPlace(values.place);
 
     try {
-      const response = await axios.request(options);
+      const response = await axios.post("/api/aqi", {
+        place: values.place,
+      });
+
+      const weatherDataItem: WeatherDataItem = {
+        overall_aqi: response.data.overall_aqi,
+      };
+
+      setWeather([weatherDataItem]);
+      form.reset();
+
       console.log(response.data);
     } catch (error) {
       console.error(error);
@@ -84,6 +101,23 @@ const InputForm = ({ title }: InputFormProps) => {
             <Button type="submit">Search</Button>
           </form>
         </Form>
+
+        <div className="py-7 ">
+          {weather.map((weat) => (
+            <Card key={weat.overall_aqi}>
+              <CardHeader>
+                <CardTitle>AQI</CardTitle>
+                <CardDescription>{place}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>{weat.overall_aqi}</p>
+              </CardContent>
+              <CardFooter>
+                <p>{weat.overall_aqi > 200 ? " Unpleasant" : "Pleasant"}</p>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
