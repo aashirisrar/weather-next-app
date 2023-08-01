@@ -41,6 +41,7 @@ const DashboardPage = () => {
         {tools.map((tool) => (
           <Link
             href={tool.href}
+            key={tool.href}
             className={cn(
               "flex p-3 justify-center w-72 rounded-lg hover:bg-gray-100 transition",
               tool.bgColor
